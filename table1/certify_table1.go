@@ -1,3 +1,11 @@
+// Copyright (c) 2026 G. K. Bagger, A. R. Booker, B. Kerr, K. J. McGown,
+// V. Starichkova and T. Trudgian.
+// Released under the MIT License; see LICENSE.
+//
+// Certification of Table 1 at f = f_0(q_1): the specialisation of the
+// checks in construct_table1.go to the H = min{f/(2 q_1 Q(f)), sqrt(f h/2)}
+// of Theorem 4.1, together with condition (9).
+
 package main
 
 import (
@@ -12,7 +20,7 @@ func VariableStatev2New(q1 uint64, sqrtF, lambda float64, r int) VariableState {
 	h := hSet(sqrtF, lambda, r)
 	Q := largestPossibleQ2(sqrtF)
 	H1 := big.NewFloat(1).Quo(F, big.NewFloat(float64(2*q1*Q)))
-	H2 := big.NewFloat(1).Mul(bigSqrtF, big.NewFloat(math.Sqrt(float64(h/2))))
+	H2 := big.NewFloat(1).Mul(bigSqrtF, big.NewFloat(math.Sqrt(float64(h)/2)))
 
 	H := big.NewFloat(1)
 	if H1.Cmp(H2) < 0 {

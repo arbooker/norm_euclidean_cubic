@@ -38,7 +38,8 @@
 typedef __int128_t int128_t;
 typedef __uint128_t uint128_t;
 
-// Table 1 (MixedBound) values of f_0(q_1) for the primes q_1 <= 199;
+// Table 1 values of f_0(q_1) for the primes q_1 <= 199 (see
+// table1/Table1.csv, which lists the same numbers);
 // candidates with q_1 > 199 (none are expected) fall through to the
 // general criterion test below
 #define nq1 46

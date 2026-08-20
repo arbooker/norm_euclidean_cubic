@@ -5,21 +5,25 @@
 #
 # Verification of the constants in Sections 3-5 (Theorem 3.3, Lemma 3.9,
 # Theorem 4.1, Propositions 4.2 and 5.2).
-"""Verify all constants for Theorem 3.3's disjointness hypotheses
-(X>=2, 2HX<=f) and the u=1 case.
+"""Checks the numerical claims of Sections 3-5:
 
-Repair design:
-- New Lemma (PV): for squarefree s with nu prime factors, (s,f)=1, and
-  1 <= M < f with M >= 2^{nu+1} (s/phi(s)) (sqrt(f) log f + 1), there is
-  m <= M, (m,s)=1, chi(m)=omega.  With s=q1q2 (nu=2, s/phi(s)<=3):
-  M0 = 24 (sqrt(f) log f + 1).
-- Small-q2 regime: q1 q2 <= sqrt(f)/(73 log f)  ==> 3 q1 q2 M0 <= f.
+- Lemma 3.9 (Polya-Vinogradov): for squarefree s with nu prime factors,
+  (s,f)=1, and 1 <= M < f with M >= 2^{nu+1} (s/phi(s)) (sqrt(f) log f + 1),
+  there is m <= M with (m,s)=1 and chi(m)=omega.  With s=q1q2 (nu=2,
+  s/phi(s) <= 3) this gives M0 = 24 (sqrt(f) log f + 1).
+- Small-q2 regime: q1 q2 <= sqrt(f)/(73 log f)  ==>  3 q1 q2 M0 <= f.
 - Large-q2 regime: q2 > Y := sqrt(f)/(73 q1 log f) (checked >= max(h,2q1)),
   Theorem 3.3 with u=q1, v=q2, ell=1, r=3,
   H = min( f/(c q1 Q(f)), sqrt(f h / 2) ),  Q(f)=1.821 f^{1/4} log^{3/2} f,
-  c = 2 (q2 >= 2q1 guaranteed); for q1=2, c=3 and denominator 3*Q (crit 3q2m<=f);
-  for q1=3, denominator 6*Q.
+  c = 2 (q2 >= 2q1 guaranteed); for q1=2, denominator 3*Q (criterion
+  3 q2 m <= f); for q1=3, denominator 6*Q.
+- The disjointness hypotheses X >= 2 and 2HX <= f of Theorem 3.3, and the
+  u=1 case.
+
+Section A reads the published Table 1 from table1/Table1.csv; the tools in
+that directory construct and certify the table itself.
 """
+import csv, os
 from math import ceil, sqrt, log, pi
 from sympy import primerange
 PI26 = pi*pi/6
@@ -51,25 +55,24 @@ def check_thm33(f, q1, denom_c=2.0):
             if best is None or v < best[0]: best = (v, Y/h)
     return best
 
-table = {11:2.07e14,13:3.89e14,17:1.08e15,19:1.66e15,23:3.45e15,29:8.47e15,31:1.10e16,
-37:2.19e16,41:3.26e16,43:3.93e16,47:5.55e16,53:8.88e16,59:1.36e17,61:1.55e17,67:2.24e17,
-71:2.83e17,73:3.16e17,79:4.36e17,83:5.33e17,89:7.09e17,97:1.02e18,101:1.21e18,103:1.31e18,
-107:1.53e18,109:1.66e18,113:1.94e18,127:3.18e18,131:3.62e18,137:4.41e18,139:4.68e18,
-149:6.33e18,151:6.68e18,157:7.91e18,163:9.24e18,167:1.05e19,173:1.22e19,179:1.42e19,
-181:1.48e19,191:1.85e19,193:1.93e19,197:2.16e19,199:2.25e19}
+_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'table1', 'Table1.csv')
+with open(_csv) as _fp:
+    table = {int(r['q1']): float(r['f']) for r in csv.DictReader(_fp)}
+DENOM = {2: 3.0, 3: 6.0}          # c*q_1 in H = f/(c q_1 Q(f))
 
-print("=== A. Published Table 1 entries under the v12 procedure ===")
+print("=== A. Published Table 1 entries (table1/Table1.csv) ===")
 worst = (0,None)
 bad = []
 for q1, f0 in table.items():
-    r0 = check_thm33(f0, q1)
+    dc = DENOM.get(q1, 2.0)
+    r0 = check_thm33(f0, q1, denom_c=dc)
     if r0 is None: bad.append((q1,f0)); continue
     # monotonicity: margins at larger f
     for fmul in (3, 100, 1e4):
-        r = check_thm33(f0*fmul, q1)
+        r = check_thm33(f0*fmul, q1, denom_c=dc)
         if r is None or r[0] > r0[0]*1.5: bad.append((q1, f0*fmul)); break
     for fbig in (1e22, 1e30, 1e40, 1e50):
-        if fbig > f0 and check_thm33(fbig, q1) is None: bad.append((q1,fbig)); break
+        if fbig > f0 and check_thm33(fbig, q1, denom_c=dc) is None: bad.append((q1,fbig)); break
     if r0[0] > worst[0]: worst = (r0[0], q1)
 print("all entries pass:" , not bad, " failures:", bad[:5])
 print(f"worst (10)-margin at its f0: LHS={worst[0]:.3f} at q1={worst[1]}")
@@ -108,12 +111,11 @@ for f in (1e14, 2.25e19, 1e22):
     print(f"f={f:.0e}: 3*(f^0.5/73logf)*M0/f = {lhs/f:.4f} (<=1), M0<f: {M0<f}")
 print("s/phi(s) worst = (2/1)(3/2) =", 2*1.5)
 
-print("=== E. Prop 4.2 with corrected E_1 and cap check ===")
+print("=== E. Prop 4.2: E_1 and the 2HX <= f cap ===")
 f = 1e22
-E1old = 1 - PI26*(0.25+1+1/6.2e5)/6.2e5
 E1new = 1 - PI26*(0.25+2+1/6.2e5)/6.2e5
 final = (1/E1new)*PI26*1.8218*268.4*9.189/86**2
-print(f"E1 old={E1old:.7f} new={E1new:.7f}; final LHS with new E1 = {final:.5f} < 0.9994: {final<0.9994}")
+print(f"E1 = {E1new:.7f}; final LHS = {final:.5f} < 0.9994: {final<0.9994}")
 print(f"2HX/f = 2*86^2/1.82*f^(-1/2) = {2*86**2/1.82/sqrt(1e22):.2e} <= 1 for f>=1e22; "
       f"= 1 when f = {(2*86**2/1.82)**2:.3g}")
 

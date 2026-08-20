@@ -1,3 +1,11 @@
+// Copyright (c) 2026 G. K. Bagger, A. R. Booker, B. Kerr, K. J. McGown,
+// V. Starichkova and T. Trudgian.
+// Released under the MIT License; see LICENSE.
+//
+// Construction of Table 1: the search over lambda and over test points f_0
+// that determines, for each prime q_1, the least threshold at which the
+// hypotheses of Theorem 3.3 and condition (10) can be met.
+
 package main
 
 import (
