@@ -3,11 +3,14 @@
 #                    K. J. McGown, V. Starichkova and T. Trudgian
 # Released under the MIT License; see LICENSE.
 #
-# Verification of the constants in Sections 6-8 (Theorem 7.1, Proposition 4.2
-# and the endgame), and regeneration of the LaTeX table in Theorem 7.1's proof.
+# Verification of the constants in Sections 6-8 (Theorem 7.1, Lemma 7.6,
+# Proposition 4.2 and the endgame), and regeneration of the LaTeX table in
+# Theorem 7.1's proof.
 """Verification of the constants in Sections 6-8:
    Theorem 7.1 (thm:main1): K1=500, theta=0.44, rho=0.5805
        => q1 <= q2 <= 36.88 f^{0.21769} for 10^22 <= f <= 10^50, q1 >= 379.
+   Lemma 7.6 (lem:main2m): r=3, theta=0.53, T=ceil(f^{1/6}),
+       V=floor(13 f^{1/3} log^{1/2} f), U=ceil(V/T) => E_1+E_2 < 0.49.
    Prop 4.2 (thm:main2): r=4, C=1.82, m <= 86 f^{5/16} for q1 > 1.82 f^{1/8}.
    Section 8: Cases I/II and 10 q1^2 q2 at f >= 10^22.
    Inputs: Rosser-Schoenfeld Thm 5 (two-sided Mertens, x>=286) and the
@@ -16,7 +19,7 @@
    Ma-McGown-Rhodes-Wanner Cor 2 (q2 <= 1.821 f^{1/4} (log f)^{3/2}).
    Also regenerates the LaTeX table in the proof of Theorem 7.1, with all
    printed entries rounded outward so the table itself is a valid proof."""
-from mpmath import mp, mpf, log, sqrt, pi, ceil
+from mpmath import mp, mpf, log, sqrt, pi, ceil, floor
 import math
 
 mp.dps = 30
@@ -87,3 +90,40 @@ print(f"\nSection 8 at f=1e22: CaseII 3*36.88^2*86 = {float(3*Ac**2*M):.0f} <= f
       3*Ac**2*M <= F0**e2)
 print(f"  CaseI ratio {float(3*mpf('1.82')*Ac*14*sqrt(log(F0))/F0**(1-(mpf('0.125')+B+mpf(1)/3))):.3e};",
       f"cond3 ratio {float(10*Ac**3/F0**(1-3*B)):.3e}")
+
+# Lemma 7.6.  Two claims: the value at f=10^22, and E_1+E_2 < 0.49 throughout
+# [10^22, 10^50].  The first is evaluated exactly, with every floor and
+# ceiling retained; the second by a monotone envelope on quarter-decades.
+TH76 = mpf('0.53')
+
+def lem76_exact(f):
+    T = int(ceil(f**(mpf(1)/6)))
+    V = int(floor(13*f**(mpf(1)/3)*log(f)**mpf('0.5')))
+    U = int(ceil(mpf(V)/T))
+    W = 5 + sqrt(f)/mpf(T)**3*6*(1 + 1/(mpf(6)*T))
+    D = (sqrt(f)*W/(mpf(U)*V))**(mpf(1)/6)
+    E = E_UV(mpf(U), mpf(V))
+    return D*(C12*TH76*log(U) + 1 + mpf(U)**TH76*E)**(mpf(1)/6) + C12*mpf(U)**(-TH76) + E
+
+def lem76_envelope(fl, fr):
+    """Upper bound on [fl,fr].  T >= f^{1/6} gives sqrt(f)/T^3 <= 1, so
+    W <= 11 + 1/T; U >= V/T gives UV >= V^2/T, so Delta^6 <= sqrt(f) W T/V^2,
+    which is (1+f^{-1/6})/(169 log f (1-delta)^2) up to the W factor and so
+    decreasing in f.  E(U,V) decreases in U and V; log U and U^theta increase."""
+    Tmin = fl**(mpf(1)/6); Tmax = Tmin + 1
+    Vmin = 13*fl**(mpf(1)/3)*log(fl)**mpf('0.5') - 1
+    Vmax = 13*fr**(mpf(1)/3)*log(fr)**mpf('0.5')
+    Umin = Vmin/Tmax; Umax = Vmax/Tmin + 1
+    D6 = sqrt(fl)*(11 + 1/Tmin)*Tmax/Vmin**2
+    Emax = E_UV(Umin, Vmin)
+    br = C12*TH76*log(Umax) + 1 + Umax**TH76*Emax
+    return D6**(mpf(1)/6)*br**(mpf(1)/6) + C12*Umin**(-TH76) + Emax
+
+v0 = lem76_exact(F0)
+cuts76 = [mpf(10)**(mpf(22)+mpf(i)/4) for i in range(0, 113)]
+env = max(lem76_envelope(a, b) for a, b in zip(cuts76, cuts76[1:]))
+print(f"\nLemma 7.6: E_1+E_2 at f=1e22 = {float(v0):.7f} (paper: 0.48296)")
+print(f"  envelope over [1e22,1e50], 112 quarter-decades: max {float(env):.6f} < 0.49:", env < mpf('0.49'))
+print(f"  exact value decreasing on 10^22..10^50 (step 10^0.01):",
+      all(lem76_exact(mpf(10)**(mpf(22)+mpf(i)/100)) > lem76_exact(mpf(10)**(mpf(22)+mpf(i+1)/100))
+          for i in range(0, 2800)), f"; value at 10^50 = {float(lem76_exact(mpf('1e50'))):.6f}")

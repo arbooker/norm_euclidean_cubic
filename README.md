@@ -108,7 +108,7 @@ Each is standalone and takes no arguments; together they need `mpmath` and
 | Script | What it checks |
 | --- | --- |
 | `verify_sections3-5.py` | The constants in Theorem 3.3, Lemma 3.9, Theorem 4.1 and Propositions 4.2 and 5.2, including the disjointness hypotheses `X >= 2` and `2HX <= f`. Its first section re-checks the rows of `table1/Table1.csv` independently of the Go program, and at `f` well beyond `10^22`. |
-| `verify_theorem71.py` | The constants in Theorem 7.1 (`q_2 <= 36.88 f^0.21769`), Proposition 4.2 and the endgame of Section 8. It also regenerates the LaTeX table in the proof of Theorem 7.1, with every entry rounded outward so that the printed table is itself a valid proof. |
+| `verify_theorem71.py` | The constants in Theorem 7.1 (`q_2 <= 36.88 f^0.21769`), Lemma 7.6 (`E_1 + E_2 < 0.49`), Proposition 4.2 and the endgame of Section 8. It also regenerates the LaTeX table in the proof of Theorem 7.1, with every entry rounded outward so that the printed table is itself a valid proof. |
 | `optimize_constants.py` | Produces those constants, rather than checking them: a joint optimization over the parameters of Theorem 7.1 and Proposition 4.2, coupled through Case II, and the scan that locates the analytic floor at `f = 10^22`. |
 
 ## License
